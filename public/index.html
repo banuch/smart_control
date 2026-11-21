@@ -2,112 +2,414 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Relay Control</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<title>Wintek Smart Control</title>
 <style>
   :root {
-    --bg: #f4f5f7; --card: #ffffff; --text: #1d2330; --muted: #6b7280;
-    --on: #16a34a; --off: #9ca3af; --danger: #dc2626; --border: #e5e7eb;
+    --bg: #eef2f7;
+    --bg-glow: rgba(37, 99, 235, .10);
+    --card: #ffffff;
+    --card-2: #f6f8fb;
+    --text: #0f172a;
+    --muted: #64748b;
+    --border: #e2e8f0;
+    --accent: #2563eb;
+    --accent-ring: rgba(37, 99, 235, .25);
+    --on: #16a34a;
+    --on-2: #22c55e;
+    --on-glow: rgba(34, 197, 94, .45);
+    --off: #cbd5e1;
+    --off-2: #e2e8f0;
+    --danger: #dc2626;
+    --warn: #d97706;
+    --shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 8px 24px -8px rgba(15, 23, 42, .10);
   }
   @media (prefers-color-scheme: dark) {
-    :root { --bg: #0f1218; --card: #1a1f29; --text: #e8eaee; --muted: #9aa3b2;
-            --off: #4b5563; --border: #2a3140; }
+    :root {
+      --bg: #0b1220;
+      --bg-glow: rgba(59, 130, 246, .14);
+      --card: #111a2b;
+      --card-2: #0f1726;
+      --text: #e5e9f0;
+      --muted: #94a3b8;
+      --border: #1f2a3d;
+      --accent: #3b82f6;
+      --accent-ring: rgba(59, 130, 246, .35);
+      --on: #16a34a;
+      --on-2: #4ade80;
+      --on-glow: rgba(74, 222, 128, .35);
+      --off: #334155;
+      --off-2: #1e293b;
+      --danger: #f87171;
+      --warn: #fbbf24;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 12px 28px -10px rgba(0, 0, 0, .6);
+    }
   }
+
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   body {
-    margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
-    background: var(--bg); color: var(--text);
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding: 16px;
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(900px 500px at 0% -10%, var(--bg-glow), transparent 60%), var(--bg);
+    background-attachment: fixed;
+    color: var(--text);
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
+  button { font: inherit; }
+
+  /* ---------- top bar ---------- */
+  header {
+    position: sticky; top: 0; z-index: 10;
+    backdrop-filter: blur(12px);
+    background: color-mix(in srgb, var(--bg) 80%, transparent);
+    border-bottom: 1px solid var(--border);
+  }
+  .bar {
+    max-width: 1040px; margin: 0 auto; padding: 12px 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .logo {
+    width: 36px; height: 36px; border-radius: 10px; flex: none;
+    display: grid; place-items: center; color: #fff;
+    background: linear-gradient(135deg, #2563eb, #06b6d4);
+  }
+  .title { font-weight: 700; letter-spacing: -.01em; line-height: 1.1; }
+  .title small { display: block; font-weight: 500; font-size: .75rem; color: var(--muted); }
+  .spacer { flex: 1; }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 12px; border-radius: 999px;
+    font-size: .8rem; font-weight: 600;
+    background: var(--card); border: 1px solid var(--border);
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  .pill.online .dot { background: var(--on-2); box-shadow: 0 0 0 4px color-mix(in srgb, var(--on-2) 25%, transparent); }
+  .pill.offline .dot { background: var(--danger); }
+  .pill.checking .dot { background: var(--warn); animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .3; } }
+
+  .icon-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    height: 36px; padding: 0 12px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--card); color: var(--text);
+    font-size: .85rem; font-weight: 600; cursor: pointer; text-decoration: none;
+  }
+  .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ---------- layout ---------- */
+  main {
+    max-width: 1040px; margin: 0 auto; padding: 20px 16px 40px;
+    display: grid; gap: 16px;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 860px) {
+    main { grid-template-columns: 1.35fr 1fr; padding-top: 28px; gap: 20px; }
+    .side { display: grid; gap: 20px; align-content: start; }
+  }
+  .side { display: grid; gap: 16px; align-content: start; }
+
   .card {
-    width: 100%; max-width: 380px; background: var(--card); border: 1px solid var(--border);
-    border-radius: 16px; padding: 28px 24px; text-align: center;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 20px; box-shadow: var(--shadow);
+    padding: 20px;
   }
-  h1 { margin: 0 0 4px; font-size: 1.15rem; }
-  .sub { margin: 0 0 28px; color: var(--muted); font-size: .85rem; }
-  .lamp {
-    width: 120px; height: 120px; margin: 0 auto 16px; border-radius: 50%;
-    background: var(--off); transition: background .25s, box-shadow .25s;
+  .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .card h2 { margin: 0; font-size: .95rem; font-weight: 700; }
+  .tag {
+    font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    padding: 4px 8px; border-radius: 6px; background: var(--card-2); color: var(--muted);
   }
-  .lamp.on { background: var(--on); box-shadow: 0 0 40px rgba(22,163,74,.55); }
-  .state { font-size: 1.6rem; font-weight: 700; letter-spacing: .05em; margin-bottom: 24px; }
-  .row { display: flex; gap: 10px; }
-  button {
-    flex: 1; padding: 14px 0; font-size: 1rem; font-weight: 600; border-radius: 10px;
-    border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer;
+
+  /* ---------- power control ---------- */
+  .control { text-align: center; padding: 28px 20px 24px; }
+  .power-wrap { position: relative; width: min(220px, 62vw); aspect-ratio: 1; margin: 18px auto 20px; }
+  .power {
+    position: absolute; inset: 0; border-radius: 50%;
+    border: 0; cursor: pointer;
+    display: grid; place-items: center;
+    color: var(--muted);
+    background: radial-gradient(circle at 30% 25%, var(--off-2), var(--off));
+    box-shadow: inset 0 -6px 16px rgba(0,0,0,.08), 0 10px 30px -10px rgba(15,23,42,.35);
+    transition: background .35s, box-shadow .35s, color .35s, transform .1s;
+    -webkit-tap-highlight-color: transparent;
   }
-  button.primary { background: var(--on); border-color: var(--on); color: #fff; }
-  button:disabled { opacity: .5; cursor: wait; }
-  .toggle { width: 100%; margin-top: 10px; }
-  .msg { min-height: 1.3em; margin-top: 18px; font-size: .85rem; color: var(--muted); }
-  .msg.err { color: var(--danger); }
+  .power:active { transform: scale(.97); }
+  .power:focus-visible { outline: none; box-shadow: 0 0 0 6px var(--accent-ring); }
+  .power svg { width: 38%; height: 38%; }
+  .on .power {
+    color: #fff;
+    background: radial-gradient(circle at 30% 25%, var(--on-2), var(--on));
+    box-shadow: inset 0 -6px 16px rgba(0,0,0,.15), 0 0 0 10px color-mix(in srgb, var(--on-2) 15%, transparent), 0 16px 50px -6px var(--on-glow);
+  }
+  .unknown .power { opacity: .6; }
+  .ring {
+    position: absolute; inset: -10px; border-radius: 50%;
+    border: 3px solid transparent; border-top-color: var(--accent);
+    opacity: 0; transition: opacity .2s;
+  }
+  .busy .ring { opacity: 1; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .state { font-size: 2.2rem; font-weight: 800; letter-spacing: -.02em; line-height: 1; }
+  .state-sub { margin: 8px 0 22px; color: var(--muted); font-size: .9rem; }
+
+  .seg {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+    padding: 6px; border-radius: 14px; background: var(--card-2); border: 1px solid var(--border);
+    max-width: 360px; margin: 0 auto;
+  }
+  .seg button {
+    height: 46px; border: 0; border-radius: 10px; cursor: pointer;
+    font-weight: 700; color: var(--muted); background: transparent;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background .2s, color .2s;
+  }
+  .seg button:hover { color: var(--text); }
+  .on .seg [data-cmd="on"] { background: var(--on); color: #fff; }
+  .off .seg [data-cmd="off"] { background: var(--card); color: var(--text); box-shadow: var(--shadow); }
+  button:disabled { cursor: wait; }
+
+  .hint { margin: 16px 0 0; font-size: .8rem; color: var(--muted); }
+
+  /* ---------- info list ---------- */
+  .info { list-style: none; margin: 12px 0 0; padding: 0; }
+  .info li {
+    display: flex; justify-content: space-between; gap: 12px;
+    padding: 11px 0; border-top: 1px solid var(--border); font-size: .9rem;
+  }
+  .info li:first-child { border-top: 0; }
+  .info span:first-child { color: var(--muted); }
+  .info span:last-child { font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+  .mono { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: .82rem; }
+
+  .refresh {
+    width: 100%; height: 42px; margin-top: 14px; border-radius: 12px;
+    border: 1px solid var(--border); background: var(--card-2); color: var(--text);
+    font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .refresh:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ---------- activity ---------- */
+  .log { list-style: none; margin: 12px 0 0; padding: 0; max-height: 300px; overflow-y: auto; }
+  .log li {
+    display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px;
+    padding: 10px 0; border-top: 1px solid var(--border); font-size: .88rem;
+  }
+  .log li:first-child { border-top: 0; }
+  .badge { width: 8px; height: 8px; border-radius: 50%; }
+  .badge.on { background: var(--on-2); }
+  .badge.off { background: var(--muted); }
+  .badge.err { background: var(--danger); }
+  .log time { color: var(--muted); font-size: .78rem; font-variant-numeric: tabular-nums; }
+  .log .err-text { color: var(--danger); }
+  .empty { color: var(--muted); font-size: .88rem; padding: 10px 0 2px; }
+
+  /* ---------- toast ---------- */
+  .toast {
+    position: fixed; left: 50%; bottom: max(20px, env(safe-area-inset-bottom));
+    transform: translate(-50%, 20px);
+    opacity: 0; visibility: hidden; pointer-events: none;
+    max-width: calc(100% - 32px);
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; border-radius: 12px;
+    background: #0f172a; color: #fff; font-size: .9rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,.3);
+    transition: transform .3s ease, opacity .3s ease, visibility .3s;
+  }
+  .toast.show { transform: translate(-50%, 0); opacity: 1; visibility: visible; }
+  .toast.error { background: #b91c1c; }
+
+  @media (max-width: 520px) {
+    .hide-sm { display: none !important; }
+    .title { font-size: .95rem; white-space: nowrap; }
+    .card { border-radius: 16px; }
+    .state { font-size: 1.9rem; }
+  }
 </style>
 </head>
 <body>
-<main class="card">
-  <h1>Wintek Relay Control</h1>
-  <p class="sub">EC200U &middot; GPIO2</p>
-
-  <div id="lamp" class="lamp"></div>
-  <div id="state" class="state">&hellip;</div>
-
-  <div class="row">
-    <button id="btnOn" class="primary" data-cmd="on">ON</button>
-    <button id="btnOff" data-cmd="off">OFF</button>
+<header>
+  <div class="bar">
+    <div class="logo" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg>
+    </div>
+    <div class="title">Wintek Smart Control<small class="hide-sm">EC200U relay controller</small></div>
+    <div class="spacer"></div>
+    <span class="pill checking" id="pill"><span class="dot"></span><span id="pillText">Checking</span></span>
+    <a class="icon-btn" id="logout" href="/logout" hidden>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      <span class="hide-sm">Sign out</span>
+    </a>
   </div>
-  <button class="toggle" data-cmd="toggle">TOGGLE</button>
-  <button class="toggle" data-cmd="status">Refresh</button>
+</header>
 
-  <div id="msg" class="msg">Connecting to device&hellip;</div>
+<main>
+  <section class="card control unknown" id="control">
+    <div class="card-head">
+      <h2>Main relay</h2>
+      <span class="tag">GPIO 2</span>
+    </div>
+
+    <div class="power-wrap">
+      <span class="ring"></span>
+      <button class="power" id="power" data-cmd="toggle" aria-label="Toggle relay">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 3v9"/><path d="M6.3 7.1a8 8 0 1 0 11.4 0"/></svg>
+      </button>
+    </div>
+
+    <div class="state" id="state">&mdash;</div>
+    <p class="state-sub" id="stateSub">Reading relay state&hellip;</p>
+
+    <div class="seg">
+      <button data-cmd="on">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 3v9"/><path d="M6.3 7.1a8 8 0 1 0 11.4 0"/></svg>
+        Turn on
+      </button>
+      <button data-cmd="off">Turn off</button>
+    </div>
+
+    <p class="hint">Tap the big button to switch the relay.</p>
+  </section>
+
+  <div class="side">
+    <section class="card">
+      <div class="card-head"><h2>Device</h2><span class="tag">EC200U</span></div>
+      <ul class="info">
+        <li><span>Connection</span><span id="infoConn">&mdash;</span></li>
+        <li><span>Response time</span><span id="infoMs">&mdash;</span></li>
+        <li><span>Last update</span><span id="infoTime">&mdash;</span></li>
+        <li><span>Address</span><span class="mono" id="infoAddr">&mdash;</span></li>
+      </ul>
+      <button class="refresh" data-cmd="status">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+        Refresh
+      </button>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Activity</h2><span class="tag">This session</span></div>
+      <ul class="log" id="log"><li class="empty">No actions yet.</li></ul>
+    </section>
+  </div>
 </main>
 
-<script>
-  const lamp = document.getElementById("lamp");
-  const stateEl = document.getElementById("state");
-  const msg = document.getElementById("msg");
-  const buttons = document.querySelectorAll("button");
-  const POLL_MS = 20000;
-  let busy = false;
+<div class="toast" id="toast" role="status"></div>
 
-  function show(data) {
-    const on = data.relay === "on";
-    lamp.classList.toggle("on", on);
-    stateEl.textContent = on ? "ON" : "OFF";
-    msg.className = "msg";
-    msg.textContent = "Updated " + new Date().toLocaleTimeString() + " (" + data.ms + " ms)";
+<script>
+  const POLL_MS = 20000;
+  const control = document.getElementById("control");
+  const stateEl = document.getElementById("state");
+  const stateSub = document.getElementById("stateSub");
+  const pill = document.getElementById("pill");
+  const pillText = document.getElementById("pillText");
+  const logEl = document.getElementById("log");
+  const toast = document.getElementById("toast");
+  const buttons = document.querySelectorAll("[data-cmd]");
+  const LABELS = { on: "Turn on", off: "Turn off", toggle: "Toggle", status: "Refresh" };
+  let busy = false;
+  let toastTimer;
+
+  const $ = (id) => document.getElementById(id);
+  const clock = (d = new Date()) => d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+
+  function setConnection(kind, text) {
+    pill.className = "pill " + kind;
+    pillText.textContent = text;
+    $("infoConn").textContent = text;
   }
 
-  async function send(cmd) {
+  function showToast(msg, isError) {
+    clearTimeout(toastTimer);
+    toast.textContent = msg;
+    toast.className = "toast show" + (isError ? " error" : "");
+    toastTimer = setTimeout(() => toast.className = "toast", 3500);
+  }
+
+  function addLog(cmd, ok, detail) {
+    if (cmd === "status" && ok) return;   // don't fill the log with auto refreshes
+    const empty = logEl.querySelector(".empty");
+    if (empty) empty.remove();
+
+    const li = document.createElement("li");
+    const badge = document.createElement("span");
+    badge.className = "badge " + (ok ? detail : "err");
+    const text = document.createElement("span");
+    if (ok) text.textContent = LABELS[cmd] + " → " + detail.toUpperCase();
+    else { text.textContent = LABELS[cmd] + " failed"; text.className = "err-text"; text.title = detail; }
+    const time = document.createElement("time");
+    time.textContent = clock();
+    li.append(badge, text, time);
+    logEl.prepend(li);
+    while (logEl.children.length > 30) logEl.lastChild.remove();
+  }
+
+  function render(data) {
+    const on = data.relay === "on";
+    control.className = "card control " + (on ? "on" : "off");
+    stateEl.textContent = on ? "ON" : "OFF";
+    stateSub.textContent = on ? "Relay is energised" : "Relay is switched off";
+    setConnection("online", "Online");
+    $("infoMs").textContent = data.ms + " ms";
+    $("infoTime").textContent = clock();
+  }
+
+  function setBusy(on) {
+    busy = on;
+    control.classList.toggle("busy", on);
+    buttons.forEach(b => b.disabled = on);
+  }
+
+  async function send(cmd, silent) {
     if (busy) return;
-    busy = true;
-    buttons.forEach(b => b.disabled = true);
-    msg.className = "msg";
-    msg.textContent = "Sending " + cmd.toUpperCase() + "…";
+    setBusy(true);
+    if (!silent) setConnection("checking", "Sending");
+
     try {
       const res = cmd === "status"
         ? await fetch("/api/relay")
         : await fetch("/api/relay/" + cmd, { method: "POST" });
+
+      if (res.status === 401) { location.replace("/login"); return; }
+
       const data = await res.json();
       if (!data.ok) throw new Error(data.error);
-      show(data);
+      render(data);
+      addLog(cmd, true, data.relay);
+      if (cmd !== "status") showToast("Relay switched " + data.relay.toUpperCase());
     } catch (err) {
-      stateEl.textContent = "?";
-      lamp.classList.remove("on");
-      msg.className = "msg err";
-      msg.textContent = err.message;
+      const msg = err.message === "Failed to fetch" ? "Cannot reach the web server" : err.message;
+      control.className = "card control unknown";
+      stateEl.textContent = "—";
+      stateSub.textContent = "Device not reachable";
+      setConnection("offline", "Offline");
+      addLog(cmd, false, msg);
+      if (!silent || cmd !== "status") showToast(msg, true);
     } finally {
-      busy = false;
-      buttons.forEach(b => b.disabled = false);
+      setBusy(false);
     }
   }
 
   buttons.forEach(b => b.addEventListener("click", () => send(b.dataset.cmd)));
 
   // Keep the state fresh while the page is open (e.g. someone else switched it)
-  setInterval(() => { if (!document.hidden) send("status"); }, POLL_MS);
-  document.addEventListener("visibilitychange", () => { if (!document.hidden) send("status"); });
+  setInterval(() => { if (!document.hidden) send("status", true); }, POLL_MS);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) send("status", true); });
 
-  send("status");
+  fetch("/api/info").then(r => {
+    if (r.status === 401) { location.replace("/login"); return null; }
+    return r.json();
+  }).then(info => {
+    if (!info) return;
+    $("infoAddr").textContent = info.device;
+    $("logout").hidden = !info.loginEnabled;
+  }).catch(() => {});
+
+  send("status", true);
 </script>
 </body>
 </html>

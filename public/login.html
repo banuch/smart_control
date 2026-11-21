@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<title>Sign in · Wintek Smart Control</title>
+<style>
+  :root {
+    --bg: #eef2f7;
+    --bg-glow: rgba(37, 99, 235, .12);
+    --card: rgba(255, 255, 255, .92);
+    --text: #0f172a;
+    --muted: #64748b;
+    --border: #dbe2ec;
+    --field: #f8fafc;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --accent-ring: rgba(37, 99, 235, .25);
+    --danger: #dc2626;
+    --danger-bg: #fef2f2;
+    --shadow: 0 20px 50px -12px rgba(15, 23, 42, .18);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0b1220;
+      --bg-glow: rgba(59, 130, 246, .18);
+      --card: rgba(17, 25, 40, .9);
+      --text: #e5e9f0;
+      --muted: #94a3b8;
+      --border: #1f2a3d;
+      --field: #0f1726;
+      --accent: #3b82f6;
+      --accent-hover: #60a5fa;
+      --accent-ring: rgba(59, 130, 246, .35);
+      --danger: #f87171;
+      --danger-bg: rgba(248, 113, 113, .1);
+      --shadow: 0 20px 50px -12px rgba(0, 0, 0, .6);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    display: grid;
+    place-items: center;
+    padding: 24px 16px;
+    background:
+      radial-gradient(800px 500px at 15% -10%, var(--bg-glow), transparent 60%),
+      radial-gradient(700px 500px at 110% 110%, var(--bg-glow), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .card {
+    width: 100%;
+    max-width: 400px;
+    background: var(--card);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px 28px 28px;
+    box-shadow: var(--shadow);
+  }
+  .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+  .logo {
+    width: 44px; height: 44px; border-radius: 12px; flex: none;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, #2563eb, #06b6d4);
+    color: #fff;
+  }
+  .brand h1 { margin: 0; font-size: 1.15rem; letter-spacing: -.01em; }
+  .brand p { margin: 2px 0 0; font-size: .85rem; color: var(--muted); }
+
+  h2 { margin: 0 0 6px; font-size: 1.5rem; letter-spacing: -.02em; }
+  .lead { margin: 0 0 24px; color: var(--muted); font-size: .95rem; }
+
+  label { display: block; font-size: .85rem; font-weight: 600; margin: 0 0 6px; }
+  .field { position: relative; margin-bottom: 16px; }
+  input {
+    width: 100%;
+    height: 48px;
+    padding: 0 14px;
+    font: inherit;
+    font-size: 1rem;
+    color: var(--text);
+    background: var(--field);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-ring); }
+  .field.pw input { padding-right: 48px; }
+  .eye {
+    position: absolute; right: 6px; bottom: 6px;
+    width: 36px; height: 36px; border: 0; border-radius: 8px;
+    background: transparent; color: var(--muted); cursor: pointer;
+    display: grid; place-items: center;
+  }
+  .eye:hover { color: var(--text); }
+
+  .error {
+    display: none;
+    align-items: center; gap: 8px;
+    margin: 4px 0 16px; padding: 10px 12px;
+    font-size: .9rem; color: var(--danger);
+    background: var(--danger-bg); border-radius: 10px;
+  }
+  .error.show { display: flex; }
+
+  .submit {
+    width: 100%; height: 50px; margin-top: 8px;
+    border: 0; border-radius: 12px;
+    font: inherit; font-size: 1rem; font-weight: 600;
+    color: #fff; background: var(--accent); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    transition: background .15s, transform .05s;
+  }
+  .submit:hover { background: var(--accent-hover); }
+  .submit:active { transform: scale(.99); }
+  .submit:disabled { opacity: .7; cursor: wait; }
+  .spinner {
+    display: none; width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+  .submit:disabled .spinner { display: block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .foot { margin: 24px 0 0; text-align: center; font-size: .8rem; color: var(--muted); }
+</style>
+</head>
+<body>
+<main class="card">
+  <div class="brand">
+    <div class="logo" aria-hidden="true">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg>
+    </div>
+    <div>
+      <h1>Wintek Smart Control</h1>
+      <p>EC200U relay controller</p>
+    </div>
+  </div>
+
+  <h2>Sign in</h2>
+  <p class="lead">Enter your details to control the relay.</p>
+
+  <form id="form" novalidate>
+    <div class="field">
+      <label for="user">User name</label>
+      <input id="user" name="user" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+    </div>
+
+    <div class="field pw">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+      <button type="button" class="eye" id="eye" aria-label="Show password">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
+
+    <div class="error" id="error" role="alert">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      <span id="errorText"></span>
+    </div>
+
+    <button class="submit" id="submit" type="submit">
+      <span class="spinner"></span>
+      <span id="submitText">Sign in</span>
+    </button>
+  </form>
+
+  <p class="foot">&copy; Wintek Solutions</p>
+</main>
+
+<script>
+  const form = document.getElementById("form");
+  const user = document.getElementById("user");
+  const password = document.getElementById("password");
+  const submit = document.getElementById("submit");
+  const submitText = document.getElementById("submitText");
+  const error = document.getElementById("error");
+  const errorText = document.getElementById("errorText");
+  const eye = document.getElementById("eye");
+
+  (user.value ? password : user).focus();
+
+  eye.addEventListener("click", () => {
+    const show = password.type === "password";
+    password.type = show ? "text" : "password";
+    eye.setAttribute("aria-label", show ? "Hide password" : "Show password");
+    eye.style.color = show ? "var(--accent)" : "";
+  });
+
+  function showError(msg) {
+    errorText.textContent = msg;
+    error.classList.add("show");
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    error.classList.remove("show");
+
+    if (!user.value.trim() || !password.value) {
+      showError("Enter your user name and password.");
+      return;
+    }
+
+    submit.disabled = true;
+    submitText.textContent = "Signing in…";
+
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user: user.value.trim(), password: password.value }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || "Sign in failed");
+      submitText.textContent = "Opening…";
+      location.replace("/");
+    } catch (err) {
+      showError(err.message === "Failed to fetch" ? "Cannot reach the server." : err.message);
+      password.select();
+      submit.disabled = false;
+      submitText.textContent = "Sign in";
+    }
+  });
+</script>
+</body>
+</html>
