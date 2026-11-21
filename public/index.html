@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relay Control</title>
+<style>
+  :root {
+    --bg: #f4f5f7; --card: #ffffff; --text: #1d2330; --muted: #6b7280;
+    --on: #16a34a; --off: #9ca3af; --danger: #dc2626; --border: #e5e7eb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0f1218; --card: #1a1f29; --text: #e8eaee; --muted: #9aa3b2;
+            --off: #4b5563; --border: #2a3140; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding: 16px;
+  }
+  .card {
+    width: 100%; max-width: 380px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 28px 24px; text-align: center;
+  }
+  h1 { margin: 0 0 4px; font-size: 1.15rem; }
+  .sub { margin: 0 0 28px; color: var(--muted); font-size: .85rem; }
+  .lamp {
+    width: 120px; height: 120px; margin: 0 auto 16px; border-radius: 50%;
+    background: var(--off); transition: background .25s, box-shadow .25s;
+  }
+  .lamp.on { background: var(--on); box-shadow: 0 0 40px rgba(22,163,74,.55); }
+  .state { font-size: 1.6rem; font-weight: 700; letter-spacing: .05em; margin-bottom: 24px; }
+  .row { display: flex; gap: 10px; }
+  button {
+    flex: 1; padding: 14px 0; font-size: 1rem; font-weight: 600; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer;
+  }
+  button.primary { background: var(--on); border-color: var(--on); color: #fff; }
+  button:disabled { opacity: .5; cursor: wait; }
+  .toggle { width: 100%; margin-top: 10px; }
+  .msg { min-height: 1.3em; margin-top: 18px; font-size: .85rem; color: var(--muted); }
+  .msg.err { color: var(--danger); }
+</style>
+</head>
+<body>
+<main class="card">
+  <h1>Wintek Relay Control</h1>
+  <p class="sub">EC200U &middot; GPIO2</p>
+
+  <div id="lamp" class="lamp"></div>
+  <div id="state" class="state">&hellip;</div>
+
+  <div class="row">
+    <button id="btnOn" class="primary" data-cmd="on">ON</button>
+    <button id="btnOff" data-cmd="off">OFF</button>
+  </div>
+  <button class="toggle" data-cmd="toggle">TOGGLE</button>
+  <button class="toggle" data-cmd="status">Refresh</button>
+
+  <div id="msg" class="msg">Connecting to device&hellip;</div>
+</main>
+
+<script>
+  const lamp = document.getElementById("lamp");
+  const stateEl = document.getElementById("state");
+  const msg = document.getElementById("msg");
+  const buttons = document.querySelectorAll("button");
+  const POLL_MS = 20000;
+  let busy = false;
+
+  function show(data) {
+    const on = data.relay === "on";
+    lamp.classList.toggle("on", on);
+    stateEl.textContent = on ? "ON" : "OFF";
+    msg.className = "msg";
+    msg.textContent = "Updated " + new Date().toLocaleTimeString() + " (" + data.ms + " ms)";
+  }
+
+  async function send(cmd) {
+    if (busy) return;
+    busy = true;
+    buttons.forEach(b => b.disabled = true);
+    msg.className = "msg";
+    msg.textContent = "Sending " + cmd.toUpperCase() + "…";
+    try {
+      const res = cmd === "status"
+        ? await fetch("/api/relay")
+        : await fetch("/api/relay/" + cmd, { method: "POST" });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error);
+      show(data);
+    } catch (err) {
+      stateEl.textContent = "?";
+      lamp.classList.remove("on");
+      msg.className = "msg err";
+      msg.textContent = err.message;
+    } finally {
+      busy = false;
+      buttons.forEach(b => b.disabled = false);
+    }
+  }
+
+  buttons.forEach(b => b.addEventListener("click", () => send(b.dataset.cmd)));
+
+  // Keep the state fresh while the page is open (e.g. someone else switched it)
+  setInterval(() => { if (!document.hidden) send("status"); }, POLL_MS);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) send("status"); });
+
+  send("status");
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "wintek-relay-webapp",
+  "version": "1.0.0",
+  "description": "Web control for the EC200U GPIO2 relay over TCP/IPv6",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}
