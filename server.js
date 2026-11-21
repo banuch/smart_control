@@ -7,16 +7,48 @@
 //
 // No npm packages needed: uses only Node's built-in modules.
 //
-// Settings (environment variables):
+// Settings are read from the .env file next to this script
+// (copy .env.example to .env and edit it):
 //   DEVICE_HOST   device IPv6 address         (default below)
 //   DEVICE_PORT   device TCP port             (default 5000)
 //   WEB_PORT      port for this web app       (default 8080)
 //   APP_PASSWORD  if set, the page asks for this password (user name: admin)
+// A variable already set in the environment takes priority over .env.
 
 const http = require("http");
 const net = require("net");
 const fs = require("fs");
 const path = require("path");
+
+loadEnvFile(path.join(__dirname, ".env"));
+
+// Reads KEY=value lines; ignores blank lines and # comments.
+function loadEnvFile(file) {
+  if (!fs.existsSync(file)) {
+    console.log("No .env file found at", file, "- using defaults");
+    return;
+  }
+
+  for (const rawLine of fs.readFileSync(file, "utf8").split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("#")) continue;
+
+    const eq = line.indexOf("=");
+    if (eq === -1) continue;
+
+    const key = line.slice(0, eq).trim().replace(/^export\s+/, "");
+    let value = line.slice(eq + 1).trim();
+
+    // Strip matching quotes: KEY="value" or KEY='value'
+    if (value.length >= 2 && (value[0] === '"' || value[0] === "'") && value.endsWith(value[0])) {
+      value = value.slice(1, -1);
+    }
+
+    if (!(key in process.env)) process.env[key] = value;
+  }
+
+  console.log("Loaded settings from", file);
+}
 
 const DEVICE_HOST = process.env.DEVICE_HOST || "2401:4900:9864:A48F::2";
 const DEVICE_PORT = parseInt(process.env.DEVICE_PORT || "5000", 10);
